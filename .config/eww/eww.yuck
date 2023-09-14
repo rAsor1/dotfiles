@@ -1,0 +1,125 @@
+(defwindow bar1
+  :monitor 1
+  :windowtype "dock"
+	:geometry (geometry
+    :x "3px"
+		:y "3px"
+    :width "1914px"
+    :height "3%"
+    :anchor "top left")
+  :stacking "fg"
+  :wm-ignore false
+  (bar))
+
+(defwindow bar
+  :monitor 0
+  :windowtype "dock"
+	:geometry (geometry
+    :x "3px"
+		:y "3px"
+    :width "1914px"
+    :height "3%"
+    :anchor "top left")
+  :stacking "fg"
+  :wm-ignore false
+  (bar))
+
+;TESTING
+(defwindow notes
+  :monitor 0
+  :windowtype "Normal"
+	:geometry (geometry
+    :x "3px"
+		:y "50px"
+    :width "30%"
+    :height "30%"
+    )
+  :stacking "fg"
+  :wm-ignore false
+  :focusable true
+  (notes))
+
+(defwidget notes []
+  (input :value "Hello"))
+
+(defwidget bar []
+  (centerbox :orientation "h" :class "whole" :space-evenly false
+    (left) (center) (right)))
+
+;-----------------------------------------------------------------------------------
+; Widgets
+;-----------------------------------------------------------------------------------
+
+(defwidget left []
+  (box :class "main" :orientation "h" :halign "start"
+    (music)))
+
+(defwidget center [] 
+  (box :class "main" :orientation "h" :halign "middle"
+    (time)))
+
+(defwidget right [] 
+  (box :class "main" :orientation "h" :halign "end" :space-evenly false
+    (battery) (power)))
+
+;-----------------------------------------------------------------------------------
+; Non-Main Widgets
+;-----------------------------------------------------------------------------------
+
+;Left
+
+(defwidget music []
+  (box :orientation "h" :space-evenly false :width "3%"
+    "󰝚 " {music != "" ? "${music} at " : ""} volume))
+
+;Center
+
+(defwidget time []
+  (box :orientation "h" :halign "end"
+    time))
+
+;Right
+
+(defwidget battery []
+  (box :orientation "h" :halign "end"
+    (_battery :status {EWW_BATTERY.BAT1.status}
+              :battery {EWW_BATTERY.BAT1.capacity}
+              :charge "󰂄" :one "󰁹" :two "󰂂" :three "󰂀" :four "󰁿"
+              :five "󰁽" :six "󰁼" :seven "󰁺")
+              {EWW_BATTERY["BAT1"]["capacity"]} "%"))
+
+(defwidget power [] 
+  (eventbox :onhover "eww update pwrmenu=true" :onhoverlost "eww update pwrmenu=false" :space-evenly false :class "space"
+    (box :orientation "h" :space-evenly false :class "space"
+      (revealer :reveal pwrmenu :transition "slideright" :duration "200ms" :space-evenly false
+        (box :space-evenly false :class "hidden"
+          (button :onclick "systemctl poweroff" "⏻ ")
+          (button :onclick "swaymsg exit" " ")
+          (button :onclick "systemctl suspend" "⏾")))
+      (box :orientation "h" :class "space" "⏻ "))))
+
+(defvar pwrmenu false)
+
+;-----------------------------------------------------------------------------------
+; Polls & Listens
+;-----------------------------------------------------------------------------------
+
+(defwidget _battery [battery status one two three
+                    four five six seven charge]
+  (box :class "bat-box" :space-evenly false :spacing 8
+    (label :text {status == 'Charging' ? charge :
+      battery < 15 ? seven :
+        battery < 30 ? six :
+          battery < 45 ? five :
+            battery < 60 ? four :
+              battery < 75 ? three :
+                battery < 95 ? two : one})))
+
+(defpoll volume :interval "10s"
+  "scripts/volume")
+
+(deflisten music :initial ""
+  "playerctl --follow metadata --format '{{ artist }} - {{ title }}' || true")
+
+(defpoll time :interval "10s"
+  "date '+  %H:%M   %b %d, %Y'")

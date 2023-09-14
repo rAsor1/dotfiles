@@ -1,0 +1,9 @@
+font:
+  normal:
+    family: FiraCode Nerd font
+    style: regular
+
+colors:
+  primary:
+    background: '#1A1B26'
+    foreground: '#A9B1D6'
